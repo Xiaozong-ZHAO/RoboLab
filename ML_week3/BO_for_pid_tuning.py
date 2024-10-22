@@ -126,15 +126,15 @@ def objective(params):
 
 def main():
     # Define the search space for Kp and Kd
-   # Define the search space as before
+    # Define the search space as before
     space = [
-        Real(0.1, 1000, name=f'kp{i}') for i in range(7)
+        Real(0.1, 50, name=f'kp{i}') for i in range(7)
     ] + [
-        Real(0.0, 100, name=f'kd{i}') for i in range(7)
+        Real(0.0, 5, name=f'kd{i}') for i in range(7)
     ]
 
     rbf_kernel = RBF(
-    length_scale=1.0,            # Initial length scale
+    length_scale=0.5,            # Initial length scale
     length_scale_bounds=(1e-2, 1e2)  # Bounds for length scale
     )
 
@@ -148,7 +148,7 @@ def main():
     result = gp_minimize(
     objective,
     space,
-    n_calls=20,
+    n_calls=100,
     base_estimator=gp,  # Use the custom Gaussian Process Regressor
     acq_func='EI',      # TODO change this LCB': Lower Confidence Bound 'EI': Expected Improvement 'PI': Probability of Improvement
     random_state=42)
@@ -156,18 +156,26 @@ def main():
     # Extract the optimal values
     best_kp = result.x[:7]  # Optimal kp vector
     best_kd = result.x[7:]  # Optimal kd vector
-
+    f_best = result.func_vals  # Best objective function values
     # Prepare data
     kp0_values_array = np.array(kp0_values).reshape(-1, 1)
     kd0_values_array = np.array(kd0_values).reshape(-1, 1)
     tracking_errors_array = np.array(tracking_errors)
 
     # Fit GP models
-    gp_kp0 = fit_gp_model_1d(kp0_values_array, tracking_errors_array)
-    gp_kd0 = fit_gp_model_1d(kd0_values_array, tracking_errors_array)
+    gp_kp0, kp0x, kp0y = fit_gp_model_1d(kp0_values_array, tracking_errors_array)
+    gp_kd0, kd0x, kd0y = fit_gp_model_1d(kd0_values_array, tracking_errors_array)
 
     # Plot the results
-    plot_gp_results_1d(kp0_values_array, kd0_values_array, tracking_errors_array, gp_kp0, gp_kd0)
+    plot_gp_results_1d(kp0_values_array, kd0_values_array, tracking_errors_array, gp_kp0, gp_kd0,
+                        kp0x, kp0y,
+                        kd0x, kd0y)
+    plt.plot(range(1, len(f_best) + 1), f_best)
+    plt.xlabel('Iterations')
+    plt.ylabel('Best Objective Function Value (Best Tracking Error)')
+    plt.title('Best Objective Function Value vs Iterations')
+    plt.grid(True)
+    plt.show()
     print(f"Optimal Kp: {best_kp}, Optimal Kd: {best_kd}")
 
 if __name__ == "__main__":
