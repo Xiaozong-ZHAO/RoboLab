@@ -8,6 +8,7 @@ def main():
     # Configuration for the simulation
     conf_file_name = "pandaconfig.json"  # Configuration file for the robot
     cur_dir = os.path.dirname(os.path.abspath(__file__))
+    
     sim = pb.SimInterface(conf_file_name, conf_file_path_ext=cur_dir)  # Initialize simulation interface
 
     # Get active joint names from the simulation
@@ -99,8 +100,8 @@ def main():
     # Assuming tau_pred and tau_mes_all are your data arrays
     fig, axs = plt.subplots(nrows=7, ncols=1, figsize=(5, 7))  # Adjust the size and number of rows as needed
     for i in range(0,7,1):
-        axs[i].plot(tau_pred[i:70007:7][1000:], label='Actual', color='blue')
-        axs[i].plot(tau_mes_all[i:70007:7][1000:], label='Predicted', color='red')
+        axs[i].plot(tau_pred[i:70007:7][0:10], label='Actual', color='blue')
+        axs[i].plot(tau_mes_all[i:70007:7][0:10], label='Predicted', color='red')
         axs[i].legend(loc='upper right')
 
     plt.tight_layout()

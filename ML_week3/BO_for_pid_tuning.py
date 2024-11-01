@@ -74,7 +74,8 @@ def simulate_with_given_pid_values(sim_, kp, kd, episode_duration=10):
         # Compute sinusoidal reference trajectory
         q_des, qd_des = ref.get_values(current_time)  # Desired position and velocity
         # Control command
-        cmd.tau_cmd = feedback_lin_ctrl(dyn_model, q_mes, qd_mes, q_des, qd_des, kp, kd)  # Zero torque command
+        tau_cmd = feedback_lin_ctrl(dyn_model, q_mes, qd_mes, q_des, qd_des, kp, kd)  # Zero torque command
+        cmd.SetControlCmd(tau_cmd, ["torque"]*7)  # Set the computed torque command
         sim_.Step(cmd, "torque")  # Simulation step with torque command
 
         # Exit logic with 'q' key
@@ -128,13 +129,13 @@ def main():
     # Define the search space for Kp and Kd
     # Define the search space as before
     space = [
-        Real(0.1, 50, name=f'kp{i}') for i in range(7)
+        Real(0.1, 1000, name=f'kp{i}') for i in range(7)
     ] + [
-        Real(0.0, 5, name=f'kd{i}') for i in range(7)
+        Real(0.0, 50, name=f'kd{i}') for i in range(7)
     ]
 
     rbf_kernel = RBF(
-    length_scale=0.5,            # Initial length scale
+    length_scale=1,            # Initial length scale
     length_scale_bounds=(1e-2, 1e2)  # Bounds for length scale
     )
 
@@ -148,7 +149,7 @@ def main():
     result = gp_minimize(
     objective,
     space,
-    n_calls=100,
+    n_calls=200,
     base_estimator=gp,  # Use the custom Gaussian Process Regressor
     acq_func='EI',      # TODO change this LCB': Lower Confidence Bound 'EI': Expected Improvement 'PI': Probability of Improvement
     random_state=42)
